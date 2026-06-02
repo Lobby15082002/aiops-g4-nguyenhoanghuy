@@ -1,0 +1,11 @@
+template_id,template,count
+2,<*> <*> <*> INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: <*> is added to <*> size <*>,314
+1,<*> <*> <*> INFO dfs.DataNode$PacketResponder: PacketResponder <*> for block <*> terminating,311
+3,<*> <*> <*> INFO dfs.DataNode$PacketResponder: Received block <*> of size <*> from <*>,292
+4,<*> <*> <*> INFO dfs.DataNode$DataXceiver: Receiving block <*> src: <*> dest: <*>,292
+7,<*> <*> <*> INFO dfs.FSDataset: Deleting block <*> file <*>,263
+10,<*> <*> <*> INFO dfs.FSNamesystem: BLOCK* NameSystem.delete: <*> is added to invalidSet of <*>,224
+5,<*> <*> <*> INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: <*> <*>,115
+9,<*> <*> <*> WARN dfs.DataNode$DataXceiver: <*> exception while serving <*> to <*>,80
+8,<*> <*> <*> INFO dfs.DataNode$DataXceiver: <*> Served block <*> to <*>,80
+6,<*> <*> 13 INFO dfs.DataBlockScanner: Verification succeeded for <*>,20
