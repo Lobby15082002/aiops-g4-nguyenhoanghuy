@@ -1,0 +1,438 @@
+{
+    "_meta": {
+        "purpose": "Historical incident catalog cho LLM retrieval / RAG layer. 30 incident giả lập 6 tháng GeekShop production.",
+        "schema": "{id, ts, severity, services_involved, root_cause_service, root_cause_class, summary, remediation, mttd_min, mttr_min}",
+        "note": "Trainer-only sees ground truth that scenario chính match closest với INC-2025-11-08 (payment connection pool exhaustion). Students should observe LLM retrieval pick this incident."
+    },
+    "incidents": [
+        {
+            "id": "INC-2025-06-12",
+            "ts": "2025-06-12T03:14:00Z",
+            "severity": "high",
+            "services_involved": [
+                "catalog-svc",
+                "catalog-db"
+            ],
+            "root_cause_service": "catalog-db",
+            "root_cause_class": "slow_query",
+            "summary": "Catalog page load \u003E 5s. Missing index on products.category_id after schema migration.",
+            "remediation": "Add covering index on (category_id, status). Backfill stats.",
+            "mttd_min": 12,
+            "mttr_min": 58
+        },
+        {
+            "id": "INC-2025-07-04",
+            "ts": "2025-07-04T22:01:00Z",
+            "severity": "critical",
+            "services_involved": [
+                "payment-svc",
+                "payments-db",
+                "checkout-svc"
+            ],
+            "root_cause_service": "payments-db",
+            "root_cause_class": "lock_contention",
+            "summary": "Payment timeout cascading to checkout. Long-running ETL holding row lock on payments table.",
+            "remediation": "Kill ETL session. Move ETL to read replica. Add lock_timeout = 5s in app.",
+            "mttd_min": 4,
+            "mttr_min": 22
+        },
+        {
+            "id": "INC-2025-07-19",
+            "ts": "2025-07-19T09:42:00Z",
+            "severity": "high",
+            "services_involved": [
+                "checkout-svc",
+                "cart-svc",
+                "cart-redis"
+            ],
+            "root_cause_service": "cart-redis",
+            "root_cause_class": "eviction",
+            "summary": "Cart loss spikes. cart-redis maxmemory hit, allkeys-lru evicting active carts.",
+            "remediation": "Tăng maxmemory 4GB → 8GB. Switch policy → volatile-lru. Set TTL trên transient keys.",
+            "mttd_min": 18,
+            "mttr_min": 45
+        },
+        {
+            "id": "INC-2025-08-02",
+            "ts": "2025-08-02T15:32:00Z",
+            "severity": "medium",
+            "services_involved": [
+                "recommender-svc"
+            ],
+            "root_cause_service": "recommender-svc",
+            "root_cause_class": "memory_leak",
+            "summary": "Recommender OOM mỗi 4h sau deploy v3.1. Pandas DataFrame không release giữa request.",
+            "remediation": "Patch leak; rollback v3.0 trong khi chờ. Add gc.collect() trong handler.",
+            "mttd_min": 45,
+            "mttr_min": 90
+        },
+        {
+            "id": "INC-2025-08-17",
+            "ts": "2025-08-17T11:10:00Z",
+            "severity": "high",
+            "services_involved": [
+                "edge-lb"
+            ],
+            "root_cause_service": "edge-lb",
+            "root_cause_class": "tls_expiry",
+            "summary": "TLS cert expired sáng. Cert renewal automation fail im lặng 2 tuần trước.",
+            "remediation": "Renew bằng tay. Fix renewal job. Add alert 14 ngày trước expire.",
+            "mttd_min": 8,
+            "mttr_min": 15
+        },
+        {
+            "id": "INC-2025-09-05",
+            "ts": "2025-09-05T20:48:00Z",
+            "severity": "critical",
+            "services_involved": [
+                "payment-svc",
+                "payments-db"
+            ],
+            "root_cause_service": "payment-svc",
+            "root_cause_class": "connection_pool_exhaustion",
+            "summary": "Payment timeout 100%. Deploy v2.6 leak DB connection — pool from 50 → 50 hold, never return.",
+            "remediation": "Rollback v2.6. Add max_idle_time + leak detection. Increase pool 50 → 100 cushion.",
+            "mttd_min": 6,
+            "mttr_min": 18
+        },
+        {
+            "id": "INC-2025-09-21",
+            "ts": "2025-09-21T04:33:00Z",
+            "severity": "medium",
+            "services_involved": [
+                "search-svc",
+                "catalog-db"
+            ],
+            "root_cause_service": "catalog-db",
+            "root_cause_class": "slow_query",
+            "summary": "Search latency p99 1.5s → 8s. New seller import → 2M rows, no ANALYZE chạy, planner pick wrong index.",
+            "remediation": "ANALYZE catalog tables. Schedule weekly ANALYZE.",
+            "mttd_min": 22,
+            "mttr_min": 38
+        },
+        {
+            "id": "INC-2025-10-03",
+            "ts": "2025-10-03T16:22:00Z",
+            "severity": "high",
+            "services_involved": [
+                "notification-svc",
+                "kafka-events"
+            ],
+            "root_cause_service": "kafka-events",
+            "root_cause_class": "rebalance_storm",
+            "summary": "Notification lag 5 phút. Consumer group rebalance liên tục sau khi auto-scale add 4 instance.",
+            "remediation": "Static partition assignment cho group. Cap auto-scale 1 instance / 30s.",
+            "mttd_min": 14,
+            "mttr_min": 52
+        },
+        {
+            "id": "INC-2025-10-15",
+            "ts": "2025-10-15T08:55:00Z",
+            "severity": "high",
+            "services_involved": [
+                "checkout-svc",
+                "inventory-svc"
+            ],
+            "root_cause_service": "inventory-svc",
+            "root_cause_class": "infinite_retry",
+            "summary": "Checkout slow vì inventory-svc retry vô hạn khi stock-fetch timeout.",
+            "remediation": "Add circuit breaker (Hystrix-style) 50% error → open. Cap retry = 3.",
+            "mttd_min": 11,
+            "mttr_min": 28
+        },
+        {
+            "id": "INC-2025-10-28",
+            "ts": "2025-10-28T13:40:00Z",
+            "severity": "low",
+            "services_involved": [
+                "recommender-svc"
+            ],
+            "root_cause_service": "recommender-svc",
+            "root_cause_class": "model_drift",
+            "summary": "Recommendation CTR drop 30%. New product taxonomy không có embedding tương ứng.",
+            "remediation": "Re-train embedding. Add monitoring trên unknown_category_rate.",
+            "mttd_min": 180,
+            "mttr_min": 240
+        },
+        {
+            "id": "INC-2025-11-08",
+            "ts": "2025-11-08T10:15:00Z",
+            "severity": "critical",
+            "services_involved": [
+                "payment-svc",
+                "payments-db",
+                "checkout-svc"
+            ],
+            "root_cause_service": "payment-svc",
+            "root_cause_class": "connection_pool_exhaustion",
+            "summary": "Payment-svc v3.2 deploy at 09:42 leak DB pool. Pool 50/50 used trong 5 phút. Downstream checkout cascade. Notification queue backed up.",
+            "remediation": "Rollback to v3.1. Scale pool 50 → 100 cushion. Add pool monitor alert \u003E 80%.",
+            "mttd_min": 3,
+            "mttr_min": 19
+        },
+        {
+            "id": "INC-2025-11-19",
+            "ts": "2025-11-19T06:18:00Z",
+            "severity": "medium",
+            "services_involved": [
+                "auth-svc"
+            ],
+            "root_cause_service": "auth-svc",
+            "root_cause_class": "rate_limit_misconfig",
+            "summary": "Auth deny legitimate user sau khi tighten rate limit 100→10 req/min by mistake.",
+            "remediation": "Revert config. Add canary cho rate limit changes.",
+            "mttd_min": 9,
+            "mttr_min": 14
+        },
+        {
+            "id": "INC-2025-12-01",
+            "ts": "2025-12-01T19:30:00Z",
+            "severity": "high",
+            "services_involved": [
+                "catalog-svc",
+                "catalog-db",
+                "search-svc"
+            ],
+            "root_cause_service": "catalog-db",
+            "root_cause_class": "vacuum_storm",
+            "summary": "Postgres autovacuum trên large table block read query. Catalog + search degrade.",
+            "remediation": "Tune autovacuum: workers + maintenance_work_mem. Schedule manual VACUUM.",
+            "mttd_min": 25,
+            "mttr_min": 75
+        },
+        {
+            "id": "INC-2025-12-12",
+            "ts": "2025-12-12T14:00:00Z",
+            "severity": "high",
+            "services_involved": [
+                "edge-lb",
+                "auth-svc"
+            ],
+            "root_cause_service": "edge-lb",
+            "root_cause_class": "config_push",
+            "summary": "Bad nginx config push (typo upstream block) → 502 sau khi reload.",
+            "remediation": "Rollback config. Lint config in CI. Canary reload.",
+            "mttd_min": 2,
+            "mttr_min": 7
+        },
+        {
+            "id": "INC-2026-01-04",
+            "ts": "2026-01-04T22:50:00Z",
+            "severity": "critical",
+            "services_involved": [
+                "payment-svc"
+            ],
+            "root_cause_service": "payment-svc",
+            "root_cause_class": "thread_starvation",
+            "summary": "Payment 100% error. New blocking call (sync HTTP to bank) drain thread pool.",
+            "remediation": "Switch to async client. Bulkhead thread pool size limit.",
+            "mttd_min": 4,
+            "mttr_min": 25
+        },
+        {
+            "id": "INC-2026-01-18",
+            "ts": "2026-01-18T05:11:00Z",
+            "severity": "medium",
+            "services_involved": [
+                "inventory-svc"
+            ],
+            "root_cause_service": "inventory-svc",
+            "root_cause_class": "cache_stampede",
+            "summary": "Inventory cache expired cùng lúc → 4000 req/s hit DB cùng lúc → spike.",
+            "remediation": "Probabilistic early expiration. Add jitter to TTL.",
+            "mttd_min": 7,
+            "mttr_min": 22
+        },
+        {
+            "id": "INC-2026-01-29",
+            "ts": "2026-01-29T11:55:00Z",
+            "severity": "high",
+            "services_involved": [
+                "search-svc",
+                "catalog-db"
+            ],
+            "root_cause_service": "search-svc",
+            "root_cause_class": "n_plus_1",
+            "summary": "Search trả 3s sau khi enable 'related products' feature. N+1 query trên catalog-db.",
+            "remediation": "Batch fetch related products. Add monitoring query count / request.",
+            "mttd_min": 32,
+            "mttr_min": 48
+        },
+        {
+            "id": "INC-2026-02-08",
+            "ts": "2026-02-08T16:42:00Z",
+            "severity": "medium",
+            "services_involved": [
+                "notification-svc"
+            ],
+            "root_cause_service": "notification-svc",
+            "root_cause_class": "downstream_provider",
+            "summary": "Email provider (SendGrid) regional outage. Notification queue grow nhưng không impact checkout (async).",
+            "remediation": "Failover to backup provider. Multi-provider routing.",
+            "mttd_min": 18,
+            "mttr_min": 35
+        },
+        {
+            "id": "INC-2026-02-22",
+            "ts": "2026-02-22T08:20:00Z",
+            "severity": "high",
+            "services_involved": [
+                "cart-svc",
+                "cart-redis"
+            ],
+            "root_cause_service": "cart-redis",
+            "root_cause_class": "network_partition",
+            "summary": "Cart-redis primary failover, replica chưa sync. Lost ~30s writes.",
+            "remediation": "Reduce min_replicas_to_write. Enable AOF persistence.",
+            "mttd_min": 1,
+            "mttr_min": 9
+        },
+        {
+            "id": "INC-2026-03-07",
+            "ts": "2026-03-07T13:15:00Z",
+            "severity": "low",
+            "services_involved": [
+                "recommender-svc",
+                "catalog-db"
+            ],
+            "root_cause_service": "recommender-svc",
+            "root_cause_class": "batch_overlap",
+            "summary": "Recommender daily retrain overlap với marketing read job, contention trên catalog-db.",
+            "remediation": "Stagger schedule. Move retrain to read replica.",
+            "mttd_min": 28,
+            "mttr_min": 32
+        },
+        {
+            "id": "INC-2026-03-20",
+            "ts": "2026-03-20T20:08:00Z",
+            "severity": "critical",
+            "services_involved": [
+                "edge-lb",
+                "checkout-svc",
+                "payment-svc"
+            ],
+            "root_cause_service": "edge-lb",
+            "root_cause_class": "ddos",
+            "summary": "Volumetric DDoS 5x normal traffic. Edge-lb saturate, all upstream visible degraded.",
+            "remediation": "WAF rate-limit + Cloudflare proxy. Geographic rule.",
+            "mttd_min": 5,
+            "mttr_min": 95
+        },
+        {
+            "id": "INC-2026-04-02",
+            "ts": "2026-04-02T03:33:00Z",
+            "severity": "medium",
+            "services_involved": [
+                "checkout-svc"
+            ],
+            "root_cause_service": "checkout-svc",
+            "root_cause_class": "deadlock",
+            "summary": "Checkout deadlock acquiring cart-redis + payments-db cùng lúc giữa 2 transaction.",
+            "remediation": "Order lock acquisition. Add lock timeout.",
+            "mttd_min": 12,
+            "mttr_min": 26
+        },
+        {
+            "id": "INC-2026-04-15",
+            "ts": "2026-04-15T17:00:00Z",
+            "severity": "high",
+            "services_involved": [
+                "catalog-svc",
+                "recommender-svc"
+            ],
+            "root_cause_service": "catalog-svc",
+            "root_cause_class": "bad_deploy",
+            "summary": "Catalog v4.0 trả wrong field name. Recommender break vì depend.",
+            "remediation": "Rollback v4.0. Add contract test giữa catalog + recommender.",
+            "mttd_min": 6,
+            "mttr_min": 11
+        },
+        {
+            "id": "INC-2026-04-26",
+            "ts": "2026-04-26T11:30:00Z",
+            "severity": "medium",
+            "services_involved": [
+                "auth-svc",
+                "payments-db"
+            ],
+            "root_cause_service": "payments-db",
+            "root_cause_class": "slow_query",
+            "summary": "Auth login slow vì 1 query đếm transaction từ user joining payments-db không có index.",
+            "remediation": "Add index. Decouple auth from payments-db.",
+            "mttd_min": 38,
+            "mttr_min": 55
+        },
+        {
+            "id": "INC-2026-05-10",
+            "ts": "2026-05-10T09:55:00Z",
+            "severity": "critical",
+            "services_involved": [
+                "payment-svc",
+                "payments-db"
+            ],
+            "root_cause_service": "payment-svc",
+            "root_cause_class": "connection_pool_exhaustion",
+            "summary": "Lặp lại pattern INC-2025-11-08. Pool monitor không trigger vì threshold đặt 95% (pool 50 thì 47 connection hold pre-spike). After-action: lower threshold to 80%.",
+            "remediation": "Lower pool monitor threshold 95% → 80%. Auto-rollback nếu pool full \u003E 60s.",
+            "mttd_min": 2,
+            "mttr_min": 12
+        },
+        {
+            "id": "INC-2026-05-18",
+            "ts": "2026-05-18T22:00:00Z",
+            "severity": "low",
+            "services_involved": [
+                "notification-svc"
+            ],
+            "root_cause_service": "notification-svc",
+            "root_cause_class": "feature_flag",
+            "summary": "Notification spam (5x normal) sau khi enable feature flag mới mà không gate.",
+            "remediation": "Disable flag. Add rate-limit per user.",
+            "mttd_min": 22,
+            "mttr_min": 8
+        },
+        {
+            "id": "INC-2026-05-25",
+            "ts": "2026-05-25T07:42:00Z",
+            "severity": "medium",
+            "services_involved": [
+                "search-svc"
+            ],
+            "root_cause_service": "search-svc",
+            "root_cause_class": "cache_cold_start",
+            "summary": "Search latency spike sau restart vì cache cold. ~10 phút phục hồi.",
+            "remediation": "Pre-warm cache trên health check. Tăng warmup quota.",
+            "mttd_min": 3,
+            "mttr_min": 15
+        },
+        {
+            "id": "INC-2026-05-30",
+            "ts": "2026-05-30T18:20:00Z",
+            "severity": "medium",
+            "services_involved": [
+                "inventory-svc",
+                "catalog-db"
+            ],
+            "root_cause_service": "catalog-db",
+            "root_cause_class": "replication_lag",
+            "summary": "Inventory read stale data 30s. Replication lag spike do bulk import on primary.",
+            "remediation": "Throttle bulk import. Read from primary for stock-critical query.",
+            "mttd_min": 9,
+            "mttr_min": 18
+        },
+        {
+            "id": "INC-2026-06-02",
+            "ts": "2026-06-02T12:00:00Z",
+            "severity": "low",
+            "services_involved": [
+                "recommender-svc"
+            ],
+            "root_cause_service": "recommender-svc",
+            "root_cause_class": "data_pipeline_lag",
+            "summary": "Recommendation stale 1 ngày. Upstream Spark job fail im lặng.",
+            "remediation": "Add alert trên feature freshness. SLA cho upstream job.",
+            "mttd_min": 90,
+            "mttr_min": 30
+        }
+    ]
+}

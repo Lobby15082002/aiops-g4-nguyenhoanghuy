@@ -1,0 +1,74 @@
+{
+  "input_alerts": 20,
+  "output_clusters": 3,
+  "reduction_ratio": 0.85,
+  "clusters": [
+    {
+      "cluster_id": "c-000-000",
+      "alert_count": 15,
+      "services": [
+        "cart-svc",
+        "checkout-svc",
+        "edge-lb",
+        "notification-svc",
+        "payment-svc",
+        "recommender-svc"
+      ],
+      "time_range": [
+        "2026-06-12T09:42:01Z",
+        "2026-06-12T09:46:01Z"
+      ],
+      "max_severity": "crit",
+      "fingerprints": [
+        "cart-svc|latency_p99_ms|warn",
+        "checkout-svc|downstream_payment_error_rate|crit",
+        "checkout-svc|latency_p99_ms|warn",
+        "checkout-svc|request_drop_rate|crit",
+        "edge-lb|p99_latency_ms|crit",
+        "edge-lb|upstream_5xx_rate|warn",
+        "notification-svc|queue_lag_ms|warn",
+        "payment-svc|db_connection_pool_used_ratio|crit",
+        "payment-svc|db_connection_pool_used_ratio|warn",
+        "payment-svc|error_rate|warn",
+        "payment-svc|latency_p99_ms|crit",
+        "recommender-svc|cpu_utilization|warn"
+      ]
+    },
+    {
+      "cluster_id": "c-001-000",
+      "alert_count": 2,
+      "services": [
+        "checkout-svc",
+        "search-svc"
+      ],
+      "time_range": [
+        "2026-06-12T09:46:50Z",
+        "2026-06-12T09:47:12Z"
+      ],
+      "max_severity": "crit",
+      "fingerprints": [
+        "checkout-svc|latency_p99_ms|crit",
+        "search-svc|catalog_db_query_time_ms|warn"
+      ]
+    },
+    {
+      "cluster_id": "c-002-000",
+      "alert_count": 3,
+      "services": [
+        "edge-lb",
+        "notification-svc",
+        "payment-svc"
+      ],
+      "time_range": [
+        "2026-06-12T09:48:01Z",
+        "2026-06-12T09:48:30Z"
+      ],
+      "max_severity": "crit",
+      "fingerprints": [
+        "edge-lb|upstream_5xx_rate|crit",
+        "notification-svc|queue_depth|crit",
+        "payment-svc|error_rate|crit"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "clusters_analyzed": 3,
+  "results": [
+    {
+      "cluster_id": "c-000-000",
+      "graph_top3": [
+        [
+          "payment-svc",
+          0.9296
+        ],
+        [
+          "checkout-svc",
+          0.8603
+        ],
+        [
+          "cart-svc",
+          0.6407
+        ]
+      ],
+      "root_cause": "payment-svc",
+      "class": "connection_pool_exhaustion",
+      "confidence": 0.9296,
+      "actions": [
+        "Rollback to v3.1. Scale pool 50 \u2192 100 cushion. Add pool monitor alert > 80%."
+      ],
+      "reasoning": "payment-svc ranked #1 by Graph RCA (PageRank+timestamp score=0.9296). Most similar past incident: INC-2025-11-08 (similarity=1.0) which had root_cause_class='connection_pool_exhaustion'. Incident summary: Payment-svc v3.2 deploy at 09:42 leak DB pool. Pool 50/50 used trong 5 ph\u00fat. Downstream checkout cascade. Notification queue backed up.",
+      "similar_incidents": [
+        "INC-2025-11-08",
+        "INC-2026-03-20",
+        "INC-2025-08-17"
+      ],
+      "method": "graph+retrieval"
+    },
+    {
+      "cluster_id": "c-001-000",
+      "graph_top3": [
+        [
+          "checkout-svc",
+          1.0
+        ],
+        [
+          "search-svc",
+          0.4
+        ]
+      ],
+      "root_cause": "checkout-svc",
+      "class": "other",
+      "confidence": 1.0,
+      "actions": [
+        "Batch fetch related products. Add monitoring query count / request."
+      ],
+      "reasoning": "checkout-svc ranked #1 by Graph RCA (PageRank+timestamp score=1.0). Most similar past incident: INC-2026-01-29 (similarity=0.8) which had root_cause_class='other'. Incident summary: Search tr\u1ea3 3s sau khi enable 'related products' feature. N+1 query tr\u00ean catalog-db.",
+      "similar_incidents": [
+        "INC-2026-01-29",
+        "INC-2026-04-02",
+        "INC-2026-05-25"
+      ],
+      "method": "graph+retrieval"
+    },
+    {
+      "cluster_id": "c-002-000",
+      "graph_top3": [
+        [
+          "payment-svc",
+          1.0
+        ],
+        [
+          "edge-lb",
+          0.5927
+        ],
+        [
+          "notification-svc",
+          0.4
+        ]
+      ],
+      "root_cause": "payment-svc",
+      "class": "ddos",
+      "confidence": 1.0,
+      "actions": [
+        "WAF rate-limit + Cloudflare proxy. Geographic rule."
+      ],
+      "reasoning": "payment-svc ranked #1 by Graph RCA (PageRank+timestamp score=1.0). Most similar past incident: INC-2026-03-20 (similarity=1.0) which had root_cause_class='ddos'. Incident summary: Volumetric DDoS 5x normal traffic. Edge-lb saturate, all upstream visible degraded.",
+      "similar_incidents": [
+        "INC-2026-03-20",
+        "INC-2025-08-17",
+        "INC-2025-09-05"
+      ],
+      "method": "graph+retrieval"
+    }
+  ]
+}

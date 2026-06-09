@@ -1,0 +1,211 @@
+{
+    "_meta": {
+        "scenario": "Synthetic e-commerce platform 'GeekShop'. 10 services + 2 backing stores. Map sang NAB metric streams + HDFS log slice của W1.",
+        "schema_version": "1.0",
+        "generated_for": "AIOps W2 group lab (Thu Jun 11 - Fri Jun 12, 2026)",
+        "nab_mapping": "Mỗi service có 1 NAB stream gán cố định cho metric latency. CPU/memory derive bằng cách thêm noise + shift baseline."
+    },
+    "services": [
+        {
+            "name": "edge-lb",
+            "tier": "edge",
+            "team": "platform",
+            "owner_pager": "platform-oncall",
+            "criticality": "high",
+            "nab_stream": "realKnownCause/ec2_request_latency_system_failure.csv"
+        },
+        {
+            "name": "auth-svc",
+            "tier": "api",
+            "team": "identity",
+            "owner_pager": "identity-oncall",
+            "criticality": "high",
+            "nab_stream": "realKnownCause/ambient_temperature_system_failure.csv"
+        },
+        {
+            "name": "checkout-svc",
+            "tier": "api",
+            "team": "checkout",
+            "owner_pager": "checkout-oncall",
+            "criticality": "high",
+            "nab_stream": "realAWSCloudwatch/ec2_cpu_utilization_5f5533.csv"
+        },
+        {
+            "name": "payment-svc",
+            "tier": "api",
+            "team": "payments",
+            "owner_pager": "payments-oncall",
+            "criticality": "critical",
+            "nab_stream": "realAWSCloudwatch/ec2_cpu_utilization_77c1ca.csv"
+        },
+        {
+            "name": "cart-svc",
+            "tier": "api",
+            "team": "checkout",
+            "owner_pager": "checkout-oncall",
+            "criticality": "medium",
+            "nab_stream": "realAWSCloudwatch/ec2_cpu_utilization_825cc2.csv"
+        },
+        {
+            "name": "catalog-svc",
+            "tier": "api",
+            "team": "catalog",
+            "owner_pager": "catalog-oncall",
+            "criticality": "medium",
+            "nab_stream": "realAWSCloudwatch/ec2_cpu_utilization_ac20cd.csv"
+        },
+        {
+            "name": "recommender-svc",
+            "tier": "ml",
+            "team": "ml-platform",
+            "owner_pager": "ml-oncall",
+            "criticality": "low",
+            "nab_stream": "realAWSCloudwatch/ec2_cpu_utilization_c6585a.csv"
+        },
+        {
+            "name": "inventory-svc",
+            "tier": "api",
+            "team": "inventory",
+            "owner_pager": "inventory-oncall",
+            "criticality": "medium",
+            "nab_stream": "realAWSCloudwatch/ec2_cpu_utilization_fe7f93.csv"
+        },
+        {
+            "name": "notification-svc",
+            "tier": "api",
+            "team": "growth",
+            "owner_pager": "growth-oncall",
+            "criticality": "low",
+            "nab_stream": "realAWSCloudwatch/ec2_network_in_5abac7.csv"
+        },
+        {
+            "name": "search-svc",
+            "tier": "api",
+            "team": "search",
+            "owner_pager": "search-oncall",
+            "criticality": "medium",
+            "nab_stream": "realAWSCloudwatch/ec2_network_in_257a54.csv"
+        }
+    ],
+    "stores": [
+        {
+            "name": "payments-db",
+            "type": "postgres",
+            "team": "payments",
+            "criticality": "critical"
+        },
+        {
+            "name": "catalog-db",
+            "type": "postgres",
+            "team": "catalog",
+            "criticality": "high"
+        },
+        {
+            "name": "cart-redis",
+            "type": "redis",
+            "team": "checkout",
+            "criticality": "high"
+        },
+        {
+            "name": "kafka-events",
+            "type": "kafka",
+            "team": "platform",
+            "criticality": "high"
+        }
+    ],
+    "edges": [
+        {
+            "from": "edge-lb",
+            "to": "auth-svc",
+            "type": "http"
+        },
+        {
+            "from": "edge-lb",
+            "to": "catalog-svc",
+            "type": "http"
+        },
+        {
+            "from": "edge-lb",
+            "to": "search-svc",
+            "type": "http"
+        },
+        {
+            "from": "edge-lb",
+            "to": "checkout-svc",
+            "type": "http"
+        },
+        {
+            "from": "checkout-svc",
+            "to": "cart-svc",
+            "type": "http"
+        },
+        {
+            "from": "checkout-svc",
+            "to": "payment-svc",
+            "type": "http"
+        },
+        {
+            "from": "checkout-svc",
+            "to": "inventory-svc",
+            "type": "http"
+        },
+        {
+            "from": "checkout-svc",
+            "to": "notification-svc",
+            "type": "kafka",
+            "via": "kafka-events"
+        },
+        {
+            "from": "cart-svc",
+            "to": "cart-redis",
+            "type": "redis"
+        },
+        {
+            "from": "cart-svc",
+            "to": "catalog-svc",
+            "type": "http"
+        },
+        {
+            "from": "payment-svc",
+            "to": "payments-db",
+            "type": "postgres"
+        },
+        {
+            "from": "catalog-svc",
+            "to": "catalog-db",
+            "type": "postgres"
+        },
+        {
+            "from": "catalog-svc",
+            "to": "recommender-svc",
+            "type": "http"
+        },
+        {
+            "from": "recommender-svc",
+            "to": "catalog-db",
+            "type": "postgres"
+        },
+        {
+            "from": "search-svc",
+            "to": "catalog-db",
+            "type": "postgres"
+        },
+        {
+            "from": "inventory-svc",
+            "to": "catalog-db",
+            "type": "postgres"
+        },
+        {
+            "from": "notification-svc",
+            "to": "kafka-events",
+            "type": "kafka"
+        }
+    ],
+    "topology_notes": [
+        "edge-lb là entry point — alert tại edge-lb thường downstream propagation.",
+        "payment-svc là critical path — degrade → revenue impact.",
+        "catalog-db là single point của contention — 4 service phụ thuộc.",
+        "recommender-svc và notification-svc low-criticality — alert ở đây không nên trigger pager nếu standalone.",
+        "kafka-events là async layer — degrade tại đây latency dồn vào notification, không block checkout."
+    ]
+}
