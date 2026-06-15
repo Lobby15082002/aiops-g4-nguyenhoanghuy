@@ -1,0 +1,21 @@
+{
+  "layer": "api",
+  "static_baseline": {
+    "fired": 22,
+    "tp": 3,
+    "fp": 19,
+    "fn": 0,
+    "mttd_p50_s": 0
+  },
+  "your_mwmbr": {
+    "fired": 3,
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "mttd_p50_s": 60
+  },
+  "noise_reduction_pct": 86.4,
+  "mttd_delta_s": 60,
+  "rules_count": 2,
+  "verdict": "pass"
+}

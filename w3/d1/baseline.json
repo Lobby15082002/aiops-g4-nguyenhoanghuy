@@ -1,0 +1,26 @@
+{
+  "api": {
+    "events_per_day": 691260,
+    "events_total": 2073780,
+    "fail_count": 7234,
+    "success_rate": 0.9763181243912084,
+    "fail_rate": 0.003488316021950255,
+    "latency_p99_ms": 156
+  },
+  "db": {
+    "events_per_day": 57546,
+    "events_total": 172639,
+    "fail_count": 26,
+    "success_rate": 0.9946535834892464,
+    "fail_rate": 0.00015060328199306065,
+    "duration_p99_ms": 59
+  },
+  "frontend": {
+    "events_per_day": 172800,
+    "events_total": 518400,
+    "fail_count": 7204,
+    "success_rate": 0.9861033950617284,
+    "fail_rate": 0.013896604938271604,
+    "dom_ready_p99_ms": 1430
+  }
+}

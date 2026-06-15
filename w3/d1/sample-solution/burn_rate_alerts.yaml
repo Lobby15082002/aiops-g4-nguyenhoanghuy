@@ -1,0 +1,22 @@
+# SAMPLE solution — for testing only.
+groups:
+- name: api-slo
+  rules:
+  - alert: api_burn_rate_tier1
+    expr: |
+      (sum(rate(http_requests_fail_total[1h])) / sum(rate(http_requests_total[1h]))) / (1 - 0.999) >= 14.4
+      AND
+      (sum(rate(http_requests_fail_total[5m])) / sum(rate(http_requests_total[5m]))) / (1 - 0.999) >= 14.4
+    labels: {severity: page, tier: "1"}
+  - alert: api_burn_rate_tier2
+    expr: |
+      (sum(rate(http_requests_fail_total[6h])) / sum(rate(http_requests_total[6h]))) / (1 - 0.999) >= 6
+      AND
+      (sum(rate(http_requests_fail_total[30m])) / sum(rate(http_requests_total[30m]))) / (1 - 0.999) >= 6
+    labels: {severity: page, tier: "2"}
+  - alert: api_burn_rate_tier3
+    expr: |
+      (sum(rate(http_requests_fail_total[3d])) / sum(rate(http_requests_total[3d]))) / (1 - 0.999) >= 1
+      AND
+      (sum(rate(http_requests_fail_total[6h])) / sum(rate(http_requests_total[6h]))) / (1 - 0.999) >= 1
+    labels: {severity: ticket, tier: "3"}
