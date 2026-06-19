@@ -1,0 +1,76 @@
+# Closed-Loop Orchestrator Configuration
+
+alertmanager_url: "http://localhost:9093/api/v2/alerts"
+prometheus_url: "http://localhost:9090"
+poll_interval_seconds: 15
+
+# Decision engine: "rule_based" or "llm"
+decision_engine: "rule_based"
+
+# Runbook registry — ONLY scripts listed here are allowed to execute (hallucination defense)
+runbook_registry:
+  - "runbooks/restart_service.sh"
+  - "runbooks/scale_replicas.sh"
+  - "runbooks/clear_cache.sh"
+  - "runbooks/rollback_service.sh"
+  - "runbooks/multi_step_deploy.sh"
+
+# Alert → runbook mapping
+runbook_map:
+  HighLatency:    "runbooks/restart_service.sh"
+  HighErrorRate:  "runbooks/clear_cache.sh"
+  InstanceDown:   "runbooks/restart_service.sh"
+  MultiStepDeploy: "runbooks/multi_step_deploy.sh"
+  # Intentionally NOT in registry — used for scenario 6 test:
+  # TestHallucination: "runbooks/nonexistent_runbook.sh"
+
+# Rollback mapping: runbook → rollback script
+rollback_map:
+  "runbooks/restart_service.sh":  "runbooks/rollback_service.sh"
+  "runbooks/clear_cache.sh":      "runbooks/rollback_service.sh"
+  "runbooks/multi_step_deploy.sh": "runbooks/rollback_service.sh"
+
+# Multi-step deploy definition (for scenario 4)
+multi_step_map:
+  multi_step_deploy.sh:
+    steps:
+      - id: "step-A"
+        args: ["--step-a"]
+      - id: "step-B"
+        args: ["--step-b"]
+      - id: "step-C"
+        args: ["--step-c"]
+    rollback_steps:
+      "step-B": ["--rollback-b"]
+      "step-A": ["--rollback-a"]
+
+# Blast-radius limits
+blast_radius:
+  max_actions_per_minute: 3
+  max_restarts_per_service_per_hour: 5
+
+# Verify thresholds (from baseline.json)
+verify_thresholds:
+  latency_p99_max_ms: 500
+  error_rate_max_pct: 10.0
+  up_required: 1
+  verify_timeout_seconds: 60
+  verify_poll_interval_seconds: 10
+  verify_min_samples: 3
+
+# Prometheus queries
+prometheus_queries:
+  latency_p99: 'histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{service="{service}"}[1m])) * 1000'
+  error_rate_pct: 'rate(http_errors_total{service="{service}"}[2m]) / (rate(http_requests_total{service="{service}"}[2m]) + 0.001) * 100'
+  up: 'up{job="{service}"}'
+
+# Circuit breaker
+circuit_breaker:
+  consecutive_failure_threshold: 3
+  reset_mode: "manual"
+
+# Audit log
+audit_log_path: "audit_log.jsonl"
+
+# Runbook timeout (seconds)
+runbook_timeout_seconds: 120
