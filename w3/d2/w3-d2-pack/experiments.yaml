@@ -1,0 +1,260 @@
+# experiments.yaml — W3-D2 Chaos Engineering
+# Field structure theo §5: name, hypothesis, blast_radius, rollback, measurement, ground_truth
+# Entry #1 và #10 là reference (đã fill sẵn); #2-9 fill theo catalog §8.3
+
+experiments:
+
+  # ── Experiment 1 ─────────────────────────────────────────────────────────────
+  - id: 1
+    name: payment_latency_500ms
+    fault_type: latency
+    target: payment-svc
+    hypothesis: |
+      Steady-state: checkout_p99 ≤ 500ms, order_success_rate ≥ 99%.
+      Khi payment-svc bị inject +500ms latency, AIOps detector sẽ fire
+      latency anomaly alert trong 60s, RCA sẽ chỉ ra payment-svc là root.
+    blast_radius:
+      target: 1 instance of payment-svc
+      traffic: 10% (canary)
+      duration_seconds: 60
+    rollback:
+      automatic: true
+      trigger_when: "checkout_p99 > 2s OR order_success_rate < 95%"
+      method: "tc qdisc del dev eth0 root"
+    measurement:
+      metrics: [checkout_p99, payment_latency_p99, order_success_rate, error_log_rate]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: payment-svc
+      expected_detection: true
+      fault_signature: latency_spike
+
+  # ── Experiment 2 ─────────────────────────────────────────────────────────────
+  - id: 2
+    name: payment_packet_loss_30pct
+    fault_type: network_loss
+    target: payment-svc
+    hypothesis: |
+      Steady-state: error_rate < 1%.
+      Khi payment-svc bị 30% packet loss, retry logic sẽ tăng,
+      detector sẽ fire error_rate anomaly, RCA sẽ pick payment-svc.
+    blast_radius:
+      target: 1 instance of payment-svc
+      traffic: 10% (canary)
+      duration_seconds: 60
+    rollback:
+      automatic: true
+      trigger_when: "error_rate > 10%"
+      method: "tc qdisc del dev eth0 root"
+    measurement:
+      metrics: [error_rate, payment_retry_count, checkout_p99]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: payment-svc
+      expected_detection: true
+      fault_signature: network_loss
+
+  # ── Experiment 3 ─────────────────────────────────────────────────────────────
+  - id: 3
+    name: inventory_pod_kill
+    fault_type: availability
+    target: inventory-svc
+    hypothesis: |
+      Steady-state: inventory availability ≥ 99.5%.
+      Khi inventory-svc pod bị kill mỗi 60s, detector sẽ fire
+      availability alert, RCA sẽ chỉ ra inventory-svc.
+    blast_radius:
+      target: 1 pod of inventory-svc
+      traffic: 100% (toàn bộ inventory calls bị ảnh hưởng thoáng qua)
+      duration_seconds: 120
+    rollback:
+      automatic: true
+      trigger_when: "inventory_availability < 90%"
+      method: "docker start inventory-svc (hoặc kubectl rollout restart)"
+    measurement:
+      metrics: [inventory_availability, inventory_error_rate, checkout_p99]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: inventory-svc
+      expected_detection: true
+      fault_signature: availability
+
+  # ── Experiment 4 ─────────────────────────────────────────────────────────────
+  - id: 4
+    name: api_gateway_cpu_stress_90pct
+    fault_type: cpu_saturation
+    target: api-gateway
+    hypothesis: |
+      Steady-state: api-gateway p99 latency ≤ 200ms.
+      Khi api-gateway bị stress CPU 90%, latency cascade xuống tất cả
+      downstream services, detector sẽ fire multi-service latency alert.
+    blast_radius:
+      target: 1 instance of api-gateway
+      traffic: 20% (limited canary)
+      duration_seconds: 60
+    rollback:
+      automatic: true
+      trigger_when: "api_gateway_p99 > 1s"
+      method: "kill stress-ng process"
+    measurement:
+      metrics: [api_gateway_cpu, api_gateway_p99, downstream_latency_cascade]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: api-gateway
+      expected_detection: true
+      fault_signature: cpu_saturation
+
+  # ── Experiment 5 ─────────────────────────────────────────────────────────────
+  - id: 5
+    name: payment_db_memory_fill_95pct
+    fault_type: memory
+    target: payment-db
+    hypothesis: |
+      Steady-state: payment-db connection pool < 80%, query p99 ≤ 100ms.
+      Khi payment-db bị memory fill 95%, connection pool exhaustion xảy ra,
+      detector sẽ fire, RCA sẽ pick payment-db (không phải payment-svc).
+    blast_radius:
+      target: payment-db container
+      traffic: 10%
+      duration_seconds: 60
+    rollback:
+      automatic: true
+      trigger_when: "payment_db_connections > 95% OR payment_query_p99 > 500ms"
+      method: "kill memory stress process"
+    measurement:
+      metrics: [payment_db_memory_pct, payment_db_connections, payment_query_p99]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: payment-db
+      expected_detection: true
+      fault_signature: memory
+
+  # ── Experiment 6 ─────────────────────────────────────────────────────────────
+  - id: 6
+    name: auth_svc_clock_skew_60s
+    fault_type: time_skew
+    target: auth-svc
+    hypothesis: |
+      Steady-state: JWT validation success rate ≥ 99%.
+      Khi auth-svc bị clock skew +60s, JWT token validation sẽ fail
+      (token "expired" too soon), detector sẽ fire auth error, RCA pick auth-svc.
+    blast_radius:
+      target: auth-svc container
+      traffic: 5% (chỉ auth calls)
+      duration_seconds: 60
+    rollback:
+      automatic: true
+      trigger_when: "auth_error_rate > 5%"
+      method: "ntpdate -u pool.ntp.org (hoặc chronyc makestep)"
+    measurement:
+      metrics: [auth_success_rate, jwt_validation_errors, auth_latency_p99]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: auth-svc
+      expected_detection: true
+      fault_signature: time_skew
+
+  # ── Experiment 7 ─────────────────────────────────────────────────────────────
+  - id: 7
+    name: log_collector_disk_fill_95pct
+    fault_type: disk_fill
+    target: log-collector
+    hypothesis: |
+      Steady-state: log ingestion lag < 5s.
+      Khi log-collector disk fill 95%, log ingestion sẽ lag hoặc drop,
+      meta-monitoring sẽ catch được (detector phải monitor chính log pipeline).
+    blast_radius:
+      target: log-collector container volume
+      traffic: 0% (infrastructure component, không direct user traffic)
+      duration_seconds: 60
+    rollback:
+      automatic: true
+      trigger_when: "disk_usage > 95%"
+      method: "rm /tmp/diskfill_chaos && sync"
+    measurement:
+      metrics: [log_ingestion_lag_seconds, log_drop_rate, disk_usage_pct]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: log-collector
+      expected_detection: false   # meta-monitoring thường miss — đây là test của test
+      fault_signature: disk_fill
+
+  # ── Experiment 8 ─────────────────────────────────────────────────────────────
+  - id: 8
+    name: frontend_api_gateway_full_partition_30s
+    fault_type: network_partition
+    target: "frontend ↔ api-gateway"
+    hypothesis: |
+      Steady-state: checkout_success_rate ≥ 99%.
+      Khi network partition giữa frontend và api-gateway kéo dài 30s,
+      tất cả downstream services sẽ timeout, detector fire cascade alert,
+      RCA phải pick edge (api-gateway) không phải các downstream.
+    blast_radius:
+      target: frontend container (iptables DROP toward api-gateway)
+      traffic: 30% (canary cell)
+      duration_seconds: 30
+    rollback:
+      automatic: true
+      trigger_when: "any SLO breach > 30s"
+      method: "iptables -F INPUT && iptables -F OUTPUT"
+    measurement:
+      metrics: [checkout_success_rate, api_gateway_timeout_rate, frontend_error_rate]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: api-gateway   # edge của partition
+      expected_detection: true
+      fault_signature: network_partition
+
+  # ── Experiment 9 ─────────────────────────────────────────────────────────────
+  - id: 9
+    name: dns_resolver_slow_lookup_2s
+    fault_type: dns_latency
+    target: dns-resolver
+    hypothesis: |
+      Steady-state: DNS lookup < 10ms.
+      Khi dns-resolver bị inject +2s lookup latency, service discovery chậm,
+      intermittent timeout xảy ra, detector sẽ fire — RCA phụ thuộc topology
+      (dns-resolver là lateral service, không phải trên critical path trực tiếp).
+    blast_radius:
+      target: dns-resolver sidecar
+      traffic: 10%
+      duration_seconds: 60
+    rollback:
+      automatic: true
+      trigger_when: "dns_lookup_p99 > 5s"
+      method: "toxiproxy delete toxic dns_slow"
+    measurement:
+      metrics: [dns_lookup_p99, service_discovery_errors, downstream_timeout_rate]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: dns-resolver
+      expected_detection: true
+      fault_signature: dns_latency
+
+  # ── Experiment 10 ────────────────────────────────────────────────────────────
+  - id: 10
+    name: checkout_svc_http500_inject_20pct
+    fault_type: cascade_retry
+    target: checkout-svc
+    hypothesis: |
+      Steady-state: checkout error_rate < 1%, payment retry ≤ 2/req.
+      Khi checkout-svc inject 20% HTTP 500 responses, payment-svc sẽ retry
+      nhiều lần (retry storm), checkout fires nhiều alerts hơn payment.
+      RCA PHẢI KHÔNG pick checkout — đây là retry storm pattern;
+      root thật là checkout-svc triggering the storm (§7.3 test case).
+    blast_radius:
+      target: checkout-svc (Toxiproxy HTTP 500 20% sampling)
+      traffic: 10%
+      duration_seconds: 60
+    rollback:
+      automatic: true
+      trigger_when: "checkout_error_rate > 20% OR payment_retry_rate > 10/req"
+      method: "toxiproxy delete toxic checkout_http500"
+    measurement:
+      metrics: [checkout_error_rate, payment_retry_count, order_success_rate, alert_count_per_service]
+      capture_window: "t-2min to t+5min"
+    ground_truth:
+      root_service: checkout-svc
+      expected_detection: true
+      fault_signature: cascade_retry
+      note: "RCA must NOT pick checkout based on alert count alone — retry storm anti-pattern §7.3"

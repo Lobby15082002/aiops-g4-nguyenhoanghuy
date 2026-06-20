@@ -1,0 +1,1 @@
+{"root_service":"dns-resolver","confidence":0.84,"evidence":["fault_type=dns_latency","target=dns-resolver","metric=dns_lookup_latency_ms"]}

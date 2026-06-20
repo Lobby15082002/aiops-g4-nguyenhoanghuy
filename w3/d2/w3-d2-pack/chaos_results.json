@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "name": "payment_latency_500ms",
+    "fault_type": "latency",
+    "ground_truth_root": "payment-svc",
+    "detected": true,
+    "mttd_seconds": 1.8,
+    "rca_service": "payment-svc",
+    "rca_confidence": 0.84,
+    "false_alarms": 0,
+    "error": null
+  },
+  {
+    "id": 2,
+    "name": "payment_packet_loss_30pct",
+    "fault_type": "network_loss",
+    "ground_truth_root": "payment-svc",
+    "detected": true,
+    "mttd_seconds": 1.6,
+    "rca_service": "payment-svc",
+    "rca_confidence": 0.84,
+    "false_alarms": 0,
+    "error": null
+  },
+  {
+    "id": 3,
+    "name": "inventory_pod_kill",
+    "fault_type": "availability",
+    "ground_truth_root": "inventory-svc",
+    "detected": true,
+    "mttd_seconds": 1.6,
+    "rca_service": "inventory-svc",
+    "rca_confidence": 0.84,
+    "false_alarms": 0,
+    "error": null
+  },
+  {
+    "id": 4,
+    "name": "api_gateway_cpu_stress_90pct",
+    "fault_type": "cpu_saturation",
+    "ground_truth_root": "api-gateway",
+    "detected": true,
+    "mttd_seconds": 2.3,
+    "rca_service": "api-gateway",
+    "rca_confidence": 0.84,
+    "false_alarms": 0,
+    "error": null
+  },
+  {
+    "id": 5,
+    "name": "payment_db_memory_fill_95pct",
+    "fault_type": "memory",
+    "ground_truth_root": "payment-db",
+    "detected": true,
+    "mttd_seconds": 1.1,
+    "rca_service": "payment-db",
+    "rca_confidence": 0.84,
+    "false_alarms": 0,
+    "error": null
+  },
+  {
+    "id": 6,
+    "name": "auth_svc_clock_skew_60s",
+    "fault_type": "time_skew",
+    "ground_truth_root": "auth-svc",
+    "detected": true,
+    "mttd_seconds": 2.9,
+    "rca_service": "auth-svc",
+    "rca_confidence": 0.84,
+    "false_alarms": 0,
+    "error": null
+  },
+  {
+    "id": 7,
+    "name": "log_collector_disk_fill_95pct",
+    "fault_type": "disk_fill",
+    "ground_truth_root": "log-collector",
+    "detected": true,
+    "mttd_seconds": 2.8,
+    "rca_service": "log-collector",
+    "rca_confidence": 0.84,
+    "false_alarms": 0,
+    "error": null
+  },
+  {
+    "id": 8,
+    "name": "frontend_api_gateway_full_partition_30s",
+    "fault_type": "network_partition",
+    "ground_truth_root": "api-gateway",
+    "detected": true,
+    "mttd_seconds": 0.9,
+    "rca_service": "frontend",
+    "rca_confidence": 0.84,
+    "false_alarms": 0,
+    "error": null
+  },
+  {
+    "id": 9,
+    "name": "dns_resolver_slow_lookup_2s",
+    "fault_type": "dns_latency",
+    "ground_truth_root": "dns-resolver",
+    "detected": true,
+    "mttd_seconds": 3.2,
+    "rca_service": "dns-resolver",
+    "rca_confidence": 0.84,
+    "false_alarms": 0,
+    "error": null
+  },
+  {
+    "id": 10,
+    "name": "checkout_svc_http500_inject_20pct",
+    "fault_type": "cascade_retry",
+    "ground_truth_root": "checkout-svc",
+    "detected": false,
+    "mttd_seconds": null,
+    "rca_service": null,
+    "rca_confidence": null,
+    "false_alarms": 0,
+    "error": null
+  }
+]
